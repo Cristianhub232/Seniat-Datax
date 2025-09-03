@@ -52,14 +52,14 @@ export function NavTransactional({
                 <SidebarMenuButton asChild>
                   <a 
                     href={item.url}
-                    className={`group relative transition-all duration-300 rounded-2xl border bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white border-slate-700 hover:border-cyan-400/60 hover:shadow-cyan-500/20 hover:shadow-2xl p-3 flex items-center gap-3 overflow-hidden`}
+                    className={`group relative transition-all duration-300 rounded-2xl border bg-gradient-to-br from-slate-200 via-slate-100 to-white text-slate-800 border-slate-200 hover:border-cyan-300/60 hover:shadow-cyan-400/20 hover:shadow-xl p-3 flex items-center gap-3 overflow-hidden hover:-translate-y-[1px]`}
                   >
                     {/* Icono */}
                     {IconComponent && (
                       <span className="relative">
                         <IconComponent 
-                          size={22} 
-                          className="text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]"
+                          size={20} 
+                          className="text-cyan-600"
                         />
                       </span>
                     )}
@@ -71,16 +71,16 @@ export function NavTransactional({
 
                     {/* Badge NUEVA */}
                     {(isCarteraContribuyentes || isPagosEjecutados) && (
-                      <span className="ml-auto text-[10px] uppercase px-2 py-0.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md border border-white/10">Nueva</span>
+                      <span className="ml-auto text-[9px] uppercase px-1.5 py-0.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-sm border border-white/20 animate-pulse">Nueva</span>
                     )}
 
                     {/* Decoración tech */}
                     {isHighlighted && (
-                      <span className="pointer-events-none absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_30%_20%,_#22d3ee_0,_transparent_40%),_radial-gradient(circle_at_70%_80%,_#3b82f6_0,_transparent_40%)]"/>
+                      <span className="pointer-events-none absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_20%,_#a5f3fc_0,_transparent_40%),_radial-gradient(circle_at_70%_80%,_#93c5fd_0,_transparent_40%)]"/>
                     )}
 
-                    {/* Glow border */}
-                    <span className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-white/10"/>
+                    {/* Subtle outer ring */}
+                    <span className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-black/5"/>
                   </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
