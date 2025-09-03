@@ -19,7 +19,17 @@ import {
   IconTarget
 } from "@tabler/icons-react";
 
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+
 export default function MetabasePage() {
+  return (
+    <ProtectedRoute requiredPermission={{ resource: 'reports', action: 'read' }}>
+      <MetabasePageContent />
+    </ProtectedRoute>
+  );
+}
+
+function MetabasePageContent() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header con Banner */}

@@ -1,8 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import sequelize from '@/lib/db';
+import { verifyToken } from '@/lib/jwtUtils';
 
 export async function GET(request: NextRequest) {
   try {
+    // 🔒 VERIFICAR AUTENTICACIÓN
+    const token = request.cookies.get('auth_token')?.value;
+    
+    if (!token) {
+      console.log('🚨 API /api/dashboard/metrics - Token no encontrado');
+      return NextResponse.json(
+        { error: 'No autorizado - Token requerido' },
+        { status: 401 }
+      );
+    }
+
+    // Verificar token
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      console.log('🚨 API /api/dashboard/metrics - Token inválido');
+      return NextResponse.json(
+        { error: 'No autorizado - Token inválido' },
+        { status: 401 }
+      );
+    }
+
+    console.log(`✅ API /api/dashboard/metrics - Usuario autenticado: ${decoded.id} (${decoded.role})`);
+
     // Obtener métricas reales desde la base de datos
     const metrics = {
       ejecutivos: 0,

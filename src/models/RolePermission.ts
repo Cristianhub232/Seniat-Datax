@@ -1,8 +1,22 @@
-import { DataTypes } from "sequelize";
-import { authSequelize } from "@/lib/db";
+import { DataTypes, Model } from 'sequelize';
+import { authSequelize } from '@/lib/db';
 
-const RolePermission = authSequelize.define(
-  "RolePermission",
+// Interfaz para los atributos de la relación rol-permiso
+export interface RolePermissionAttributes {
+  id: number;
+  role_id: number;
+  permission_id: number;
+  created_at?: Date;
+}
+
+class RolePermission extends Model<RolePermissionAttributes> implements RolePermissionAttributes {
+  public id!: number;
+  public role_id!: number;
+  public permission_id!: number;
+  public created_at?: Date;
+}
+
+RolePermission.init(
   {
     id: {
       type: DataTypes.INTEGER,
@@ -13,26 +27,43 @@ const RolePermission = authSequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "CGBRITO.ROLES",
-        key: "ID",
+        model: 'ROLES',
+        key: 'ID',
       },
     },
     permission_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "CGBRITO.PERMISSIONS",
-        key: "ID",
+        model: 'PERMISSIONS',
+        key: 'ID',
       },
+    },
+    created_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
     },
   },
   {
-    schema: "CGBRITO",
-    tableName: "ROLE_PERMISSIONS",
-    timestamps: true,
-    createdAt: "CREATED_AT",
-    updatedAt: false,
+    sequelize: authSequelize,
+    schema: 'CGBRITO',
+    tableName: 'ROLE_PERMISSIONS',
+    timestamps: false,
+    indexes: [
+      {
+        unique: true,
+        fields: ['role_id', 'permission_id'],
+        name: 'UQ_ROLE_PERMISSION',
+      },
+      {
+        fields: ['role_id'],
+      },
+      {
+        fields: ['permission_id'],
+      },
+    ],
   }
 );
 
-export default RolePermission; 
+export default RolePermission;
+

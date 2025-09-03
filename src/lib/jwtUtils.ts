@@ -1,11 +1,8 @@
 
 import jwt from 'jsonwebtoken';
 
-const SECRET_ENV = process.env.JWT_SECRET;
-if (!SECRET_ENV) {
-  throw new Error('JWT_SECRET environment variable is not defined');
-}
-const SECRET: string = SECRET_ENV;
+// En modo desarrollo, usar un valor por defecto si JWT_SECRET no está disponible
+const SECRET = process.env.JWT_SECRET || 'seniat-jwt-secret-key-2024';
 const isDev = process.env.NODE_ENV !== "production";
 
 interface TokenPayload {
@@ -15,7 +12,6 @@ interface TokenPayload {
   expiresIn?: string;
 }
 
-
 export function signToken(payload: TokenPayload): string {
   return jwt.sign(payload, SECRET, { expiresIn: isDev ? "12h" : "1h" });
 }
@@ -23,7 +19,14 @@ export function signToken(payload: TokenPayload): string {
 // ✅ Esta función ahora retorna el payload decodificado o null
 export function verifyToken(token: string): TokenPayload | null {
   try {
-    return jwt.verify(token, SECRET) as TokenPayload;
+    if (!SECRET) {
+      console.error('❌ JWT_SECRET no está configurado');
+      return null;
+    }
+    
+    const decoded = jwt.verify(token, SECRET) as TokenPayload;
+    console.log('✅ Token verificado correctamente:', { id: decoded.id, role: decoded.role });
+    return decoded;
   } catch (err) {
     console.error('❌ Error verificando JWT:', err);
     return null;

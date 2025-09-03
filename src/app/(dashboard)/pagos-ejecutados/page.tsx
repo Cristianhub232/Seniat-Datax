@@ -41,7 +41,17 @@ interface PagosStats {
   rifSinPagos: number;
 }
 
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+
 export default function PagosEjecutadosPage() {
+  return (
+    <ProtectedRoute requiredPermission={{ resource: 'pagos', action: 'read' }}>
+      <PagosEjecutadosPageContent />
+    </ProtectedRoute>
+  );
+}
+
+function PagosEjecutadosPageContent() {
   const [pagos, setPagos] = useState<PagoEjecutado[]>([]);
   const [stats, setStats] = useState<PagosStats>({
     total: 0,

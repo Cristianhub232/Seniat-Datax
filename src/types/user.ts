@@ -2,7 +2,8 @@ export interface UserData {
   id: string;
   username: string;
   email: string;
-  role_id: string;
+  role: string;
+  permissions?: string[];
   avatar?: string;
 }
 

@@ -277,6 +277,20 @@ async function logAuditEvent(
   userAgent?: string
 ): Promise<void> {
   try {
+    // Verificar si la tabla AUDIT_LOGS existe antes de intentar insertar
+    const tableExists = await authSequelize.query(`
+      SELECT COUNT(*) as table_count
+      FROM user_tables 
+      WHERE table_name = 'AUDIT_LOGS'
+    `, { type: 'SELECT' });
+    
+    if (!tableExists || !tableExists[0] || tableExists[0][0] === 0) {
+      // La tabla no existe, solo log en consola
+      console.log(`📝 [AUDIT] ${action} en ${resource} por usuario ${userId} - IP: ${ipAddress}`);
+      return;
+    }
+    
+    // La tabla existe, insertar log
     await authSequelize.query(`
       INSERT INTO CGBRITO.AUDIT_LOGS (USER_ID, ACTION_NAME, RESOURCE_NAME, RESOURCE_ID, DETAILS, IP_ADDRESS, USER_AGENT)
       VALUES (:userId, :action, :resource, :resourceId, :details, :ipAddress, :userAgent)
@@ -293,6 +307,8 @@ async function logAuditEvent(
       type: 'INSERT'
     });
   } catch (err) {
+    // Si hay cualquier error, solo log en consola
+    console.log(`📝 [AUDIT] ${action} en ${resource} por usuario ${userId} - IP: ${ipAddress}`);
     console.error("[logAuditEvent] Error:", err);
   }
 }

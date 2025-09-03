@@ -24,7 +24,11 @@ interface Ejecutivo {
 }
 
 export default function EjecutivosPage() {
-  return <EjecutivosPageContent />;
+  return (
+    <ProtectedRoute requiredRole="ADMIN">
+      <EjecutivosPageContent />
+    </ProtectedRoute>
+  );
 }
 
 function EjecutivosPageContent() {

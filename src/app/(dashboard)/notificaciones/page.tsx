@@ -15,7 +15,17 @@ import AddNotificationModal from '@/components/AddNotificationModal';
 import EditNotificationModal from '@/components/EditNotificationModal';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+
 export default function NotificacionesPage() {
+  return (
+    <ProtectedRoute requiredPermission={{ resource: 'notifications', action: 'read' }}>
+      <NotificacionesPageContent />
+    </ProtectedRoute>
+  );
+}
+
+function NotificacionesPageContent() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<NotificationStats | null>(null);

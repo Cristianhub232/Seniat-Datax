@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifySession } from "@/controllers/authController";
+import { verifyToken } from "@/lib/jwtUtils";
 
 export async function GET(req: NextRequest) {
   try {
@@ -8,31 +8,45 @@ export async function GET(req: NextRequest) {
 
     if (!token) {
       return NextResponse.json(
-        { error: "No hay sesión activa" },
+        { 
+          authenticated: false, 
+          error: "No hay sesión activa" 
+        },
         { status: 401 }
       );
     }
 
-    // Verificar la sesión
-    const sessionResult = await verifySession(token);
+    // Verificar el token JWT
+    const decoded = verifyToken(token);
     
-    if (!sessionResult.valid || !sessionResult.user) {
+    if (!decoded?.id) {
       return NextResponse.json(
-        { error: "Sesión inválida o expirada" },
+        { 
+          authenticated: false, 
+          error: "Token inválido o expirado" 
+        },
         { status: 401 }
       );
     }
 
-    // Devolver información del usuario
+    // Token válido - devolver información del usuario
     return NextResponse.json({
-      user: sessionResult.user,
-      authenticated: true
+      authenticated: true,
+      user: {
+        id: decoded.id,
+        role: decoded.role,
+        // Agregar más campos si es necesario
+      },
+      message: "Sesión válida"
     });
 
   } catch (error) {
     console.error("❌ Error en endpoint /me:", error);
     return NextResponse.json(
-      { error: "Error interno del servidor" },
+      { 
+        authenticated: false, 
+        error: "Error interno del servidor" 
+      },
       { status: 500 }
     );
   }

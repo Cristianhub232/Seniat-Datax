@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useAuth } from '@/context/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -20,10 +21,46 @@ export function ProtectedRoute({
   requiredRole,
   fallback = null 
 }: ProtectedRouteProps) {
-  const { hasPermission, isAdmin, userRole } = usePermissions();
+  const { hasPermission, isAdmin, userRole, isLoading } = usePermissions();
+  const { isAuthenticated } = useAuth();
   const router = useRouter();
 
+  // Debug logs
+  console.log('🔒 ProtectedRoute - Debug:', {
+    requiredPermission,
+    requiredRole,
+    hasPermission: requiredPermission ? hasPermission(requiredPermission) : 'N/A',
+    isAdmin,
+    userRole,
+    isAuthenticated,
+    isLoading,
+    hasPermissionFn: typeof hasPermission
+  });
+
   useEffect(() => {
+    console.log('🔒 ProtectedRoute - useEffect ejecutado:', {
+      requiredRole,
+      userRole,
+      isAdmin,
+      requiredPermission,
+      hasPermissionResult: requiredPermission ? hasPermission(requiredPermission) : 'N/A',
+      isAuthenticated,
+      isLoading
+    });
+
+    // Si está cargando, esperar
+    if (isLoading) {
+      console.log('⏳ ProtectedRoute - Esperando carga...');
+      return;
+    }
+
+    // Si no está autenticado, redirigir a login
+    if (!isAuthenticated) {
+      console.log('🚫 ProtectedRoute - No autenticado, redirigiendo a login');
+      router.push('/login');
+      return;
+    }
+
     // Si se requiere un rol específico
     if (requiredRole && userRole !== requiredRole && !isAdmin) {
       console.log(`🚫 Acceso denegado: Se requiere rol ${requiredRole}, usuario tiene ${userRole}`);
@@ -37,7 +74,33 @@ export function ProtectedRoute({
       router.push('/dashboard');
       return;
     }
-  }, [requiredPermission, requiredRole, hasPermission, isAdmin, userRole, router]);
+
+    console.log('✅ ProtectedRoute - Acceso permitido');
+  }, [requiredPermission, requiredRole, hasPermission, isAdmin, userRole, router, isAuthenticated, isLoading]);
+
+  // Mostrar loading mientras se verifica la autenticación
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verificando autenticación...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Si no está autenticado, mostrar mensaje de carga (será redirigido por useEffect)
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirigiendo al login...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Si se requiere un rol específico
   if (requiredRole && userRole !== requiredRole && !isAdmin) {

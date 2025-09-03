@@ -20,7 +20,17 @@ import { SkeletonTable } from "@/components/skeletons/tables/Table";
 import { IconTrash, IconAlertTriangle, IconTrashX } from "@tabler/icons-react";
 import type { CarteraContribuyente, CarteraContribuyenteStats, CarteraContribuyenteFormData } from "@/types/carteraContribuyente";
 
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+
 export default function CarteraContribuyentesPage() {
+  return (
+    <ProtectedRoute requiredPermission={{ resource: 'cartera', action: 'read' }}>
+      <CarteraContribuyentesPageContent />
+    </ProtectedRoute>
+  );
+}
+
+function CarteraContribuyentesPageContent() {
   const [contribuyentes, setContribuyentes] = useState<CarteraContribuyente[]>([]);
   const [stats, setStats] = useState<CarteraContribuyenteStats>({
     total: 0,

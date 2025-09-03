@@ -3,7 +3,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { IconHelp, IconTools, IconBook, IconUsers, IconShield, IconFileReport } from "@tabler/icons-react";
 
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+
 export default function AyudaPage() {
+  return (
+    <ProtectedRoute requiredPermission={{ resource: 'dashboard', action: 'access' }}>
+      <AyudaPageContent />
+    </ProtectedRoute>
+  );
+}
+
+function AyudaPageContent() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}

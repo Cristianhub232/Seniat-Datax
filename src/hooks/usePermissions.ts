@@ -1,4 +1,5 @@
 import { useMemo, useCallback, useEffect, useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 export interface Permission {
   resource: string;
@@ -6,29 +7,25 @@ export interface Permission {
 }
 
 export function usePermissions() {
-  const [user, setUser] = useState<any>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const userData = localStorage.getItem("user_data");
-      if (userData) {
-        try {
-          const parsedUser = JSON.parse(userData);
-          setUser(parsedUser);
-          setIsAuthenticated(true);
-        } catch (error) {
-          console.error('Error parsing user data:', error);
-        }
-      }
-    }
-  }, []);
+  const { isAuthenticated, user, isLoading } = useAuth();
 
   const hasPermission = useCallback((requiredPermission: Permission): boolean => {
-    if (!isAuthenticated || !user) return false;
+    console.log('🔐 usePermissions - hasPermission llamado con:', {
+      requiredPermission,
+      isAuthenticated,
+      user: user ? { role: user.role, permissions: user.permissions?.length } : null
+    });
+    
+    if (!isAuthenticated || !user || isLoading) {
+      console.log('   ❌ No autenticado, sin usuario o cargando');
+      return false;
+    }
     
     // ADMIN tiene todos los permisos
-    if (user.role === 'ADMIN') return true;
+    if (user.role === 'ADMIN') {
+      console.log('   ✅ Usuario es ADMIN, permitiendo acceso');
+      return true;
+    }
     
     // Verificar si el usuario tiene el permiso específico
     // Los permisos vienen del contexto de autenticación, no del UserData
@@ -51,7 +48,7 @@ export function usePermissions() {
     }
     
     return false;
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, isLoading]);
 
   const hasAnyPermission = useCallback((requiredPermissions: Permission[]): boolean => {
     return requiredPermissions.some(permission => hasPermission(permission));
@@ -97,7 +94,8 @@ export function usePermissions() {
     canUpdate,
     canDelete,
     isAdmin: user?.role === 'ADMIN',
-    userRole: user?.role
+    userRole: user?.role,
+    isLoading
   };
 }
 

@@ -4,12 +4,9 @@ import Role from './Role';
 import Permission from './Permission';
 import RolePermission from './RolePermission';
 import Session from './Session';
-import AuditLog from './AuditLog';
-import Menu from './Menu';
-import RoleMenuPermission from './RoleMenuPermission';
-import Notification from './Notification';
 import Ticket from './Ticket';
 import TicketHistory from './TicketHistory';
+import CarteraContribuyente from './CarteraContribuyente';
 
 export {
   User,
@@ -17,12 +14,9 @@ export {
   Permission,
   RolePermission,
   Session,
-  AuditLog,
-  Menu,
-  RoleMenuPermission,
-  Notification,
   Ticket,
-  TicketHistory
+  TicketHistory,
+  CarteraContribuyente
 };
 
 // Asociaciones de autenticación
@@ -31,19 +25,21 @@ User.belongsTo(Role, {
   as: 'role',
   targetKey: 'id'
 });
+
 Role.hasMany(User, { 
   foreignKey: 'role_id', 
   as: 'users',
   sourceKey: 'id'
 });
 
-// Asociaciones de permisos
+// Asociaciones de permisos (muchos a muchos)
 Role.belongsToMany(Permission, { 
   through: RolePermission, 
   foreignKey: 'role_id', 
   otherKey: 'permission_id',
   as: 'permissions' 
 });
+
 Permission.belongsToMany(Role, { 
   through: RolePermission, 
   foreignKey: 'permission_id', 
@@ -57,46 +53,9 @@ User.hasMany(Session, {
   as: 'sessions',
   sourceKey: 'id'
 });
+
 Session.belongsTo(User, { 
   foreignKey: 'user_id', 
-  as: 'user',
-  targetKey: 'id'
-});
-
-// Asociaciones de auditoría
-User.hasMany(AuditLog, { 
-  foreignKey: 'user_id', 
-  as: 'auditLogs',
-  sourceKey: 'id'
-});
-AuditLog.belongsTo(User, { 
-  foreignKey: 'user_id', 
-  as: 'user',
-  targetKey: 'id'
-});
-
-// Asociaciones de menús
-Role.belongsToMany(Menu, { 
-  through: RoleMenuPermission, 
-  foreignKey: 'role_id', 
-  otherKey: 'menu_id',
-  as: 'menus' 
-});
-Menu.belongsToMany(Role, { 
-  through: RoleMenuPermission, 
-  foreignKey: 'menu_id', 
-  otherKey: 'role_id',
-  as: 'roles' 
-});
-
-// Asociaciones de notificaciones
-User.hasMany(Notification, {
-  foreignKey: 'user_id',
-  as: 'notifications',
-  sourceKey: 'id'
-});
-Notification.belongsTo(User, {
-  foreignKey: 'user_id',
   as: 'user',
   targetKey: 'id'
 });
@@ -107,6 +66,7 @@ User.hasMany(Ticket, {
   as: 'ticketsCreados',
   sourceKey: 'id'
 });
+
 Ticket.belongsTo(User, {
   foreignKey: 'creado_por',
   as: 'creador',
@@ -118,6 +78,7 @@ User.hasMany(Ticket, {
   as: 'ticketsAsignados',
   sourceKey: 'id'
 });
+
 Ticket.belongsTo(User, {
   foreignKey: 'ejecutivo_id',
   as: 'ejecutivo',
@@ -130,6 +91,7 @@ Ticket.hasMany(TicketHistory, {
   as: 'historial',
   sourceKey: 'id'
 });
+
 TicketHistory.belongsTo(Ticket, {
   foreignKey: 'ticket_id',
   as: 'ticket',
@@ -141,8 +103,37 @@ User.hasMany(TicketHistory, {
   as: 'cambiosRealizados',
   sourceKey: 'id'
 });
+
 TicketHistory.belongsTo(User, {
   foreignKey: 'usuario_id',
   as: 'usuario',
   targetKey: 'id'
 });
+
+// Función para sincronizar modelos
+export async function syncModels() {
+  try {
+    await User.sync({ alter: true });
+    await Role.sync({ alter: true });
+    await Permission.sync({ alter: true });
+    await RolePermission.sync({ alter: true });
+    await Session.sync({ alter: true });
+    
+    console.log('✅ Modelos sincronizados correctamente');
+  } catch (error) {
+    console.error('❌ Error sincronizando modelos:', error);
+    throw error;
+  }
+}
+
+// Función para verificar conexión
+export async function testConnection() {
+  try {
+    await User.sequelize?.authenticate();
+    console.log('✅ Conexión a la base de datos establecida');
+    return true;
+  } catch (error) {
+    console.error('❌ Error de conexión:', error);
+    return false;
+  }
+}

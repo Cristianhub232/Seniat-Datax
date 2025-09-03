@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 interface Ticket {
   id: number;
@@ -60,6 +61,14 @@ const estados = ['Pendiente', 'En Proceso', 'Completado', 'Cancelado'];
 const prioridades = ['Baja', 'Media', 'Alta', 'Crítica'];
 
 export default function TicketsPage() {
+  return (
+    <ProtectedRoute requiredPermission={{ resource: 'tickets', action: 'read' }}>
+      <TicketsPageContent />
+    </ProtectedRoute>
+  );
+}
+
+function TicketsPageContent() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [stats, setStats] = useState<TicketStats | null>(null);
   const [loading, setLoading] = useState(true);

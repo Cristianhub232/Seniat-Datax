@@ -42,7 +42,7 @@ interface User {
 
 export default function AdminUsersPage() {
   return (
-    <ProtectedRoute requiredRole="ADMIN">
+    <ProtectedRoute requiredPermission={{ resource: 'users', action: 'read' }}>
       <AdminUsersPageContent />
     </ProtectedRoute>
   );

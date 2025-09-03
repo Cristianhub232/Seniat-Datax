@@ -15,7 +15,17 @@ import {
   IconBrandGmail
 } from "@tabler/icons-react";
 
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+
 export default function ConfiguracionPage() {
+  return (
+    <ProtectedRoute requiredPermission={{ resource: 'system', action: 'config' }}>
+      <ConfiguracionPageContent />
+    </ProtectedRoute>
+  );
+}
+
+function ConfiguracionPageContent() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}

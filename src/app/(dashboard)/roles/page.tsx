@@ -33,7 +33,7 @@ interface Menu {
 
 export default function RolesPage() {
   return (
-    <ProtectedRoute requiredRole="ADMIN">
+    <ProtectedRoute requiredPermission={{ resource: 'roles', action: 'read' }}>
       <RolesPageContent />
     </ProtectedRoute>
   );
