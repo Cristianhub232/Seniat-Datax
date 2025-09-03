@@ -36,7 +36,9 @@ import {
   IconDeviceMobile,
   IconBrandGmail,
   IconChartPie,
-  IconTicket
+  IconTicket,
+  IconCreditCard,
+  IconWallet
 } from "@tabler/icons-react";
 
 export const ICON_MAP: Record<string, React.ElementType> = {
@@ -84,5 +86,7 @@ export const ICON_MAP: Record<string, React.ElementType> = {
   IconDeviceMobile,
   IconBrandGmail,
   IconChartPie,
-  IconTicket
+  IconTicket,
+  IconCreditCard,
+  IconWallet
 };

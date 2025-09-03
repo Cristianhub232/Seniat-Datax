@@ -34,8 +34,13 @@ export function NavTransactional({
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
           {items.map((item, index) => {
-            // Obtener el icono correcto
-            const IconComponent = ICON_MAP[item.icon ?? "IconHelp"] || ICON_MAP["IconHelp"];
+            // Asignar icono por URL si no viene desde BD
+            const fallbackIconKey = item.url === "/cartera-contribuyentes"
+              ? "IconWallet"
+              : item.url === "/pagos-ejecutados"
+              ? "IconCreditCard"
+              : "IconChartPie";
+            const IconComponent = ICON_MAP[item.icon ?? fallbackIconKey] || ICON_MAP["IconChartPie"];
             
             // Verificar si es el botón de Cartera de Contribuyentes o Pagos Ejecutados
             const isCarteraContribuyentes = item.url === "/cartera-contribuyentes";
@@ -47,14 +52,14 @@ export function NavTransactional({
                 <SidebarMenuButton asChild>
                   <a 
                     href={item.url}
-                    className={`group relative transition-all duration-300 rounded-xl border bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white border-slate-700 hover:border-cyan-400/60 hover:shadow-cyan-500/20 hover:shadow-xl p-3 flex items-center gap-3 overflow-hidden`}
+                    className={`group relative transition-all duration-300 rounded-2xl border bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white border-slate-700 hover:border-cyan-400/60 hover:shadow-cyan-500/20 hover:shadow-2xl p-3 flex items-center gap-3 overflow-hidden`}
                   >
                     {/* Icono */}
                     {IconComponent && (
                       <span className="relative">
                         <IconComponent 
                           size={22} 
-                          className="text-cyan-300"
+                          className="text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]"
                         />
                       </span>
                     )}
@@ -73,6 +78,9 @@ export function NavTransactional({
                     {isHighlighted && (
                       <span className="pointer-events-none absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_30%_20%,_#22d3ee_0,_transparent_40%),_radial-gradient(circle_at_70%_80%,_#3b82f6_0,_transparent_40%)]"/>
                     )}
+
+                    {/* Glow border */}
+                    <span className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-white/10"/>
                   </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
