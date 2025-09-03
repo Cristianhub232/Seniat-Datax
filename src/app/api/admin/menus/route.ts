@@ -114,7 +114,6 @@ export async function GET(req: NextRequest) {
       if (isAdmin || can('cartera.read')) addMain('cartera', 'Cartera', '/cartera-contribuyentes', 'IconWallet');
       if (isAdmin || can('pagos.read')) addMain('pagos', 'Pagos ejecutados', '/pagos-ejecutados', 'IconCreditCard');
       if (isAdmin || can('obligaciones.read')) addMain('obligaciones', 'Obligaciones', '/obligaciones', 'IconFile');
-      if (isAdmin) addMain('usuarios', 'Usuarios', '/usuarios', 'IconUsers');
       if (isAdmin || can('metabase.access')) addMain('metabase', 'Metabase', '/metabase', 'IconChart');
       // Secundarios
       navSecondary = [];
@@ -126,7 +125,22 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const payload: MenuStructure = { navMain, navSecondary, documents: [] };
+    // Deduplicar posibles entradas repetidas en navMain (por id o url)
+    const seenIds = new Set<string>();
+    const seenUrls = new Set<string>();
+    const dedupedNavMain = navMain.filter((item) => {
+      const id = item.id ?? '';
+      const url = item.url ?? '';
+      const isDuplicate = (id && seenIds.has(id)) || (url && seenUrls.has(url));
+      if (!isDuplicate) {
+        if (id) seenIds.add(id);
+        if (url) seenUrls.add(url);
+        return true;
+      }
+      return false;
+    });
+
+    const payload: MenuStructure = { navMain: dedupedNavMain, navSecondary, documents: [] };
     return NextResponse.json(payload, { status: 200 });
   } catch (error) {
     console.error('[GET /api/admin/menus] Error:', error);
