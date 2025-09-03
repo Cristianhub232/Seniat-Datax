@@ -1,4 +1,4 @@
-import { RoleMenuPermission, Menu } from "@/models/index";
+import { RolePermission } from "@/models/index";
 import { QueryTypes } from "sequelize";
 
 type MenuSection = 'main' | 'secondary' | 'document';
@@ -72,11 +72,8 @@ export async function getMenusByRole(
 
     // Para admin, obtener todos los menús sin join
     if (isAdmin) {
-      const rawMenus = await Menu.findAll({
-        where: { status: true },
-        order: [["orden", "ASC"]],
-        raw: true,
-      }) as unknown as RawMenuItem[];
+      // TODO: Implementar cuando se tenga el modelo Menu
+      const rawMenus: RawMenuItem[] = [];
 
       const navMain: MenuNodeRoot[] = [];
       const navSecondary: SecondaryItem[] = [];
@@ -114,19 +111,8 @@ export async function getMenusByRole(
 
     // Para usuarios no admin, usar consulta SQL directa
     try {
-      const rawMenus = await Menu.sequelize!.query(`
-        SELECT m.id, m.key, m.label, m.icon, m.route, m.parent_id as parentId, 
-               m.orden, m.section, m.status, m.metabase_dashboard_id as metabaseID,
-               rmp.can_view, rmp.can_edit
-        FROM CGBRITO.MENUS m
-        INNER JOIN CGBRITO.ROLE_MENU_PERMISSIONS rmp ON m.id = rmp.menu_id
-        INNER JOIN CGBRITO.ROLES r ON rmp.role_id = r.id
-        WHERE r.name = :roleName AND rmp.can_view = true AND m.status = true
-        ORDER BY m.orden ASC
-      `, {
-        replacements: { roleName: role },
-        type: QueryTypes.SELECT
-      }) as RawMenuItem[];
+      // TODO: Implementar cuando se tenga el modelo Menu
+      const rawMenus: RawMenuItem[] = [];
 
       const navMain: MenuNodeRoot[] = [];
       const navSecondary: SecondaryItem[] = [];

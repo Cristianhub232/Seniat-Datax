@@ -22,9 +22,11 @@ interface RoleTableProps {
   onEditPermissions: (role: Role) => void;
   onRoleUpdated: () => void;
   onEditRole?: (role: Role) => void;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }
 
-export function RoleTable({ roles, onEditPermissions, onRoleUpdated, onEditRole }: RoleTableProps) {
+export function RoleTable({ roles, onEditPermissions, onRoleUpdated, onEditRole, canEdit = true, canDelete = true }: RoleTableProps) {
   const [deleteRole, setDeleteRole] = useState<Role | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -120,16 +122,18 @@ export function RoleTable({ roles, onEditPermissions, onRoleUpdated, onEditRole 
                     <Eye className="h-3 w-3" />
                     Permisos
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onEditRole?.(role)}
-                    className="flex items-center gap-1"
-                  >
-                    <Edit className="h-3 w-3" />
-                    Editar
-                  </Button>
-                  {role.name !== 'admin' && (
+                  {canEdit && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onEditRole?.(role)}
+                      className="flex items-center gap-1"
+                    >
+                      <Edit className="h-3 w-3" />
+                      Editar
+                    </Button>
+                  )}
+                  {canDelete && role.name !== 'admin' && (
                     <Button
                       variant="outline"
                       size="sm"

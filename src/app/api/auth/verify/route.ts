@@ -27,10 +27,9 @@ export async function POST(req: NextRequest) {
     // Usar el nombre del rol del token en lugar del ID del rol
     const menus = await getMenusByRole(decoded.role);
 
-    const { role, ...rest } = userData;
     const responseUser = {
-      ...rest,
-      role: typeof role === 'object' && role?.name ? role.name : role,
+      ...userData,
+      role: decoded.role, // Usar el rol del token que ya está decodificado
     };
 
     return NextResponse.json({ valid: true, user: responseUser, menus });

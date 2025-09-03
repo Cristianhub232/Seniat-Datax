@@ -45,8 +45,8 @@ function NotificacionesPageContent() {
 
   const { user } = useUserData();
   
-  // Verificar si el usuario es admin (por role_id)
-  const isAdmin = user?.role_id === '9e70462a-b908-4dd6-9ec8-819f82547d21';
+  // Verificar si el usuario es admin (por role)
+  const isAdmin = user?.role === 'ADMIN';
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('es-VE', {

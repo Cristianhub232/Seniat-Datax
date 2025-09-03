@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { RoleMenuPermission, Menu } from '@/models/index';
+import { RolePermission } from '@/models/index';
 import { verifyToken } from '@/lib/jwtUtils';
 import { QueryTypes } from 'sequelize';
 
@@ -20,12 +20,11 @@ export async function GET(
     const { id: roleId } = await params;
 
     // Obtener permisos actuales del rol usando consulta SQL directa
-    const permissions = await RoleMenuPermission.sequelize!.query(`
-      SELECT rmp.role_id, rmp.menu_id, rmp.can_view, rmp.can_edit,
-             m.id as menu_id, m.key, m.label, m.route, m.section
-      FROM app.role_menu_permissions rmp
-      LEFT JOIN app.menus m ON rmp.menu_id = m.id
-      WHERE rmp.role_id = :roleId
+    const permissions = await RolePermission.sequelize!.query(`
+      SELECT rp.role_id, rp.permission_id, p.name as permission_name, p.resource_name, p.action_name
+      FROM CGBRITO.ROLE_PERMISSIONS rp
+      INNER JOIN CGBRITO.PERMISSIONS p ON rp.permission_id = p.id
+      WHERE rp.role_id = :roleId
     `, {
       replacements: { roleId },
       type: QueryTypes.SELECT
@@ -34,16 +33,10 @@ export async function GET(
     return NextResponse.json({
       role_id: roleId,
       permissions: permissions.map((perm: any) => ({
-        menu_id: perm.menu_id,
-        menu: {
-          id: perm.menu_id,
-          key: perm.key,
-          label: perm.label,
-          route: perm.route,
-          section: perm.section
-        },
-        can_view: perm.can_view,
-        can_edit: perm.can_edit
+        permission_id: perm.permission_id,
+        permission_name: perm.permission_name,
+        resource: perm.resource_name,
+        action: perm.action_name
       }))
     }, { status: 200 });
 
@@ -76,20 +69,18 @@ export async function PUT(
     }
 
     // Eliminar permisos existentes del rol
-    await RoleMenuPermission.destroy({
+    await RolePermission.destroy({
       where: { role_id: roleId }
     });
 
     // Crear nuevos permisos
     const permissionsToCreate = permissions.map((perm: any) => ({
-      role_id: roleId,
-      menu_id: perm.menu_id,
-      can_view: perm.can_view || false,
-      can_edit: perm.can_edit || false
+      role_id: parseInt(roleId),
+      permission_id: perm.permission_id
     }));
 
     if (permissionsToCreate.length > 0) {
-      await RoleMenuPermission.bulkCreate(permissionsToCreate);
+      await RolePermission.bulkCreate(permissionsToCreate);
     }
 
     return NextResponse.json({

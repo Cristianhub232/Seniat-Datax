@@ -235,8 +235,9 @@ function RolesPageContent() {
               roles={roles}
               onEditPermissions={handleEditPermissions}
               onEditRole={handleEditRole}
-              canEdit={canUpdate || isAdmin}
-              canDelete={canDelete || isAdmin}
+              onRoleUpdated={handleRoleUpdated}
+              canEdit={typeof canUpdate === 'boolean' ? canUpdate : isAdmin}
+              canDelete={typeof canDelete === 'boolean' ? canDelete : isAdmin}
             />
           )}
         </CardContent>

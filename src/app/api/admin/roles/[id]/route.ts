@@ -28,7 +28,7 @@ export async function PUT(
     // Validar estado
     if (status && !['active', 'inactive'].includes(status)) {
       return NextResponse.json(
-        { error: "Estado inválido" },
+        { error: "Estado inválido. Debe ser 'active' o 'inactive'" },
         { status: 400 }
       );
     }
@@ -61,7 +61,7 @@ export async function PUT(
     await role.update({
       name: name.trim(),
       description: description?.trim() || null,
-      status: status || (role as any).status
+      is_active: status === 'active' || role.is_active
     });
 
     return NextResponse.json(

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Role } from "@/models";
 import { validate as uuidValidate } from "uuid";
 
-const validStatuses = ["activo", "inactivo"];
+const validStatuses = ["active", "inactive"];
 
 export async function PATCH(
   req: NextRequest,
@@ -10,7 +10,8 @@ export async function PATCH(
 ) {
   const { id } = await params;
 
-  if (!uuidValidate(id)) {
+  const roleId = parseInt(id);
+  if (isNaN(roleId)) {
     return NextResponse.json({ error: "ID inválido" }, { status: 400 });
   }
 
@@ -19,18 +20,18 @@ export async function PATCH(
 
     if (!validStatuses.includes(status)) {
       return NextResponse.json(
-        { error: 'Estado inválido. Use "activo" o "inactivo"' },
+        { error: 'Estado inválido. Use "active" o "inactive"' },
         { status: 400 }
       );
     }
 
-    const role = await Role.findByPk(id);
+    const role = await Role.findByPk(roleId);
 
     if (!role) {
       return NextResponse.json({ error: "Rol no encontrado" }, { status: 404 });
     }
 
-    role.set("status", status);
+    role.set("is_active", status === "active");
     await role.save();
 
     return NextResponse.json(

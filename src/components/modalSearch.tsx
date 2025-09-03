@@ -16,7 +16,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ICON_MAP } from "@/lib/iconMap";
-import { NEXT_PUBLIC_API_URL } from "@/config/appConfig";
+// Usar variable de entorno directamente
+const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 interface dataResponse {
   rif: string;
