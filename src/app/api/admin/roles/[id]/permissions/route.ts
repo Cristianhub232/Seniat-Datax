@@ -21,10 +21,10 @@ export async function GET(
 
     // Obtener permisos actuales del rol usando consulta SQL directa
     const permissions = await RolePermission.sequelize!.query(`
-      SELECT rp.role_id, rp.permission_id, p.name as permission_name, p.resource_name, p.action_name
+      SELECT rp.ROLE_ID, rp.PERMISSION_ID, p.NAME as permission_name, p.RESOURCE_NAME, p.ACTION_NAME
       FROM CGBRITO.ROLE_PERMISSIONS rp
-      INNER JOIN CGBRITO.PERMISSIONS p ON rp.permission_id = p.id
-      WHERE rp.role_id = :roleId
+      INNER JOIN CGBRITO.PERMISSIONS p ON rp.PERMISSION_ID = p.ID
+      WHERE rp.ROLE_ID = :roleId
     `, {
       replacements: { roleId },
       type: QueryTypes.SELECT
@@ -33,10 +33,10 @@ export async function GET(
     return NextResponse.json({
       role_id: roleId,
       permissions: permissions.map((perm: any) => ({
-        permission_id: perm.permission_id,
+        permission_id: perm.PERMISSION_ID,
         permission_name: perm.permission_name,
-        resource: perm.resource_name,
-        action: perm.action_name
+        resource: perm.RESOURCE_NAME,
+        action: perm.ACTION_NAME
       }))
     }, { status: 200 });
 

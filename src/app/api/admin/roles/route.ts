@@ -1,36 +1,59 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authSequelize } from '@/lib/db';
+import { QueryTypes } from 'sequelize';
+import { verifyToken } from '@/lib/jwtUtils';
 
 // GET: listar roles
 export async function GET(req: NextRequest) {
   const token = req.cookies.get("auth_token")?.value;
   if (!token) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
 
+  // Verificar permisos: solo ADMIN o users.manage/roles.read
+  try {
+    const decoded: any = verifyToken(token);
+    if (!decoded) return NextResponse.json({ error: 'Token inválido' }, { status: 403 });
+
+    // Cargar permisos
+    const [users] = await authSequelize.query(`
+      SELECT u.ROLE_ID, r.NAME as ROLE_NAME
+      FROM CGBRITO.USERS u
+      JOIN CGBRITO.ROLES r ON u.ROLE_ID = r.ID
+      WHERE u.ID = :userId AND u.STATUS = 'active'
+    `, { replacements: { userId: decoded.id }, type: QueryTypes.SELECT });
+
+    const userRow: any = Array.isArray(users) ? (users.length > 0 ? users[0] : null) : users;
+    const roleName = (userRow?.ROLE_NAME || '').toUpperCase();
+    let permissions: string[] = [];
+    if (userRow && userRow.ROLE_ID != null) {
+      const result = await authSequelize.query(`
+        SELECT p.NAME FROM CGBRITO.PERMISSIONS p
+        JOIN CGBRITO.ROLE_PERMISSIONS rp ON p.ID = rp.PERMISSION_ID
+        WHERE rp.ROLE_ID = :roleId
+      `, { replacements: { roleId: userRow.ROLE_ID }, type: QueryTypes.SELECT });
+      const rows = Array.isArray(result) ? result : [result];
+      permissions = rows.map((r: any) => (r.NAME || r.name)).filter(Boolean);
+    }
+
+    const allowed = roleName === 'ADMIN' || permissions.includes('roles.read') || permissions.includes('roles.manage');
+    if (!allowed) {
+      return NextResponse.json({ error: 'Sin permiso para listar roles' }, { status: 403 });
+    }
+  } catch (e) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     const all = searchParams.get('all') === 'true';
 
-    let sql = `
-      SELECT r.ID as id, r.NAME as name, r.DESCRIPTION as description, r.CREATED_AT as created_at, r.UPDATED_AT as updated_at,
-             COUNT(u.ID) as user_count
+    const sql = `
+      SELECT r.ID, r.NAME, r.DESCRIPTION, r.CREATED_AT, r.UPDATED_AT,
+             (SELECT COUNT(*) FROM CGBRITO.USERS u WHERE u.ROLE_ID = r.ID) as user_count
       FROM CGBRITO.ROLES r
-      LEFT JOIN CGBRITO.USERS u ON r.ID = u.ROLE_ID
+      ORDER BY r.ID ASC
     `;
-    
-    const params: any[] = [];
-    
-    // Removemos el filtro por STATUS ya que la tabla ROLES no tiene esa columna
-    // if (!all) {
-    //   sql += ' WHERE r.STATUS = ?';
-    //   params.push('active');
-    // }
-    
-    sql += ' GROUP BY r.ID, r.NAME, r.DESCRIPTION, r.CREATED_AT, r.UPDATED_AT';
-    sql += ' ORDER BY r.CREATED_AT DESC';
-
     const result = await authSequelize.query(sql, {
-      replacements: params,
-      type: 'SELECT'
+      type: QueryTypes.SELECT
     });
 
     // Extraer el array de roles del resultado
@@ -38,13 +61,13 @@ export async function GET(req: NextRequest) {
 
     // Transformar los resultados
     const transformedRoles = roles.map((role: any) => ({
-      id: role.ID || role.id,
-      name: role.NAME || role.name,
-      description: role.DESCRIPTION || role.description,
+      id: role.ID,
+      name: role.NAME,
+      description: role.DESCRIPTION,
       status: 'active', // Asumimos que todos los roles están activos
-      created_at: role.CREATED_AT || role.created_at,
-      updated_at: role.UPDATED_AT || role.updated_at,
-      userCount: parseInt(role.USER_COUNT || role.user_count) || 0
+      created_at: role.CREATED_AT,
+      updated_at: role.UPDATED_AT,
+      userCount: parseInt(role.user_count) || 0
     }));
 
     return NextResponse.json({ roles: transformedRoles }, { status: 200 });
@@ -63,6 +86,30 @@ export async function POST(req: NextRequest) {
   if (!token) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
 
   try {
+    const decoded: any = verifyToken(token);
+    if (!decoded) return NextResponse.json({ error: 'Token inválido' }, { status: 403 });
+    // Verificar permisos para crear roles
+    const [users] = await authSequelize.query(`
+      SELECT u.ROLE_ID, r.NAME as ROLE_NAME
+      FROM CGBRITO.USERS u
+      JOIN CGBRITO.ROLES r ON u.ROLE_ID = r.ID
+      WHERE u.ID = :userId AND u.STATUS = 'active'
+    `, { replacements: { userId: decoded.id }, type: QueryTypes.SELECT });
+    const userRow: any = Array.isArray(users) ? (users.length > 0 ? users[0] : null) : users;
+    const roleName = (userRow?.ROLE_NAME || '').toUpperCase();
+    let permissions: string[] = [];
+    if (userRow && userRow.ROLE_ID != null) {
+      const result = await authSequelize.query(`
+        SELECT p.NAME FROM CGBRITO.PERMISSIONS p
+        JOIN CGBRITO.ROLE_PERMISSIONS rp ON p.ID = rp.PERMISSION_ID
+        WHERE rp.ROLE_ID = :roleId
+      `, { replacements: { roleId: userRow.ROLE_ID }, type: QueryTypes.SELECT });
+      const rows = Array.isArray(result) ? result : [result];
+      permissions = rows.map((r: any) => (r.NAME || r.name)).filter(Boolean);
+    }
+    const allowed = roleName === 'ADMIN' || permissions.includes('roles.manage') || permissions.includes('roles.create');
+    if (!allowed) return NextResponse.json({ error: 'Sin permiso para crear roles' }, { status: 403 });
+
     const body = await req.json();
     const { name, description } = body;
 
@@ -78,7 +125,7 @@ export async function POST(req: NextRequest) {
       'SELECT ID FROM CGBRITO.ROLES WHERE NAME = ?',
       {
         replacements: [name.trim()],
-        type: 'SELECT'
+        type: QueryTypes.SELECT
       }
     );
 
@@ -90,10 +137,14 @@ export async function POST(req: NextRequest) {
     }
 
     // Obtener el siguiente ID disponible
-    const [maxIdResult] = await authSequelize.query(`
+    const maxIdResult = await authSequelize.query(`
       SELECT MAX(ID) as max_id FROM CGBRITO.ROLES
-    `);
-    const nextId = ((maxIdResult[0] as any).MAX_ID || 0) + 1;
+    `, { type: QueryTypes.SELECT });
+    
+    // Si no hay roles, empezar con ID 1, sino usar el máximo + 1
+    const nextId = maxIdResult && maxIdResult.length > 0 && (maxIdResult[0] as any)?.MAX_ID 
+      ? parseInt((maxIdResult[0] as any).MAX_ID) + 1 
+      : 1;
 
     // Crear el nuevo rol
     await authSequelize.query(
@@ -101,7 +152,7 @@ export async function POST(req: NextRequest) {
        VALUES (?, ?, ?, SYSDATE, SYSDATE)`,
       {
         replacements: [nextId, name.trim(), description || null],
-        type: 'INSERT'
+        type: QueryTypes.INSERT
       }
     );
 

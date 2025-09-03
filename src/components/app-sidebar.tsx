@@ -82,9 +82,11 @@ export function AppSidebar({...props }) {
         <NavMain
           items={
             (menus?.navMain || [])
+              // Ocultar obligaciones por solicitud y separar transaccionales por ruta
               .filter((item: MenuNodeRoot) => 
-                item.title !== "Cartera de Contribuyentes" && 
-                item.title !== "Pagos Ejecutados"
+                item.url !== "/cartera-contribuyentes" && 
+                item.url !== "/pagos-ejecutados" &&
+                item.url !== "/obligaciones"
               )
               .map((item: MenuNodeRoot) => ({
                 ...item,
@@ -95,9 +97,10 @@ export function AppSidebar({...props }) {
         <NavTransactional
           items={
             (menus?.navMain || [])
+              // Mostrar módulos transaccionales por ruta
               .filter((item: MenuNodeRoot) => 
-                item.title === "Cartera de Contribuyentes" || 
-                item.title === "Pagos Ejecutados"
+                item.url === "/cartera-contribuyentes" || 
+                item.url === "/pagos-ejecutados"
               )
               .map((item: MenuNodeRoot) => ({
                 ...item,

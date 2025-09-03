@@ -105,12 +105,26 @@ export async function POST(request: NextRequest) {
       type: 'INSERT'
     });
 
-    // Crear usuario asociado
+    // Obtener ROLE_ID dinámico para EJECUTIVO
+    const [roleRows] = await authSequelize.query(`
+      SELECT ID FROM CGBRITO.ROLES WHERE UPPER(NAME) = 'EJECUTIVO'
+    `, { type: 'SELECT' });
+
+    if (!roleRows || (Array.isArray(roleRows) && roleRows.length === 0)) {
+      return NextResponse.json(
+        { error: 'Rol EJECUTIVO no encontrado' },
+        { status: 400 }
+      );
+    }
+
+    const roleId = Array.isArray(roleRows) ? (roleRows[0] as any).ID : (roleRows as any).ID;
+
+    // Crear usuario asociado con ROLE_ID correcto
     await authSequelize.query(`
       INSERT INTO CGBRITO.USERS (ID, USERNAME, EMAIL, PASSWORD_HASH, FIRST_NAME, LAST_NAME, ROLE_ID, STATUS, CREATED_AT, UPDATED_AT)
-      VALUES (SYS_GUID(), ?, ?, ?, ?, ?, 5, 'active', SYSDATE, SYSDATE)
+      VALUES (SYS_GUID(), ?, ?, ?, ?, ?, ?, 'active', SYSDATE, SYSDATE)
     `, {
-      replacements: [username, email, hashedPassword, nombre, apellido],
+      replacements: [username, email, hashedPassword, nombre, apellido, roleId],
       type: 'INSERT'
     });
 

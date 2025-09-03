@@ -48,6 +48,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const data = await res.json();
         if (data.authenticated && data.user) {
           setUserState(data.user);
+          // Persistir en UserContext también si está disponible
+          try {
+            // Guardar en localStorage para mantener permisos tras recarga
+            if (typeof window !== 'undefined') {
+              // Mantener los menús actuales para evitar parpadeos de UI
+              localStorage.setItem("user_data", JSON.stringify(data.user));
+            }
+          } catch (err) {
+            console.error('Error guardando user_data:', err);
+          }
           setIsAuthenticated(true);
           return true;
         }
@@ -148,30 +158,55 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUserState(result.user);
       setIsAuthenticated(true);
       
-      // Menús estáticos
-      const staticMenus: MenuStructure = {
-        navMain: [
-          {
-            id: 'dashboard',
-            title: 'Dashboard',
-            url: '/dashboard',
-            icon: 'HomeIcon',
-            metabaseID: null,
-            items: []
+      // Intentar cargar menús dinámicos del backend
+      let menusToPersist: MenuStructure | null = null;
+      try {
+        const res = await fetch('/api/admin/menus', { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          const menusFromApi: MenuStructure = {
+            navMain: data.navMain || [],
+            navSecondary: data.navSecondary || [],
+            upcoming: [],
+            documents: data.documents || []
+          };
+          setMenus(menusFromApi);
+          menusToPersist = menusFromApi;
+          if (typeof window !== 'undefined') {
+            localStorage.setItem("user_menus", JSON.stringify(menusFromApi));
           }
-        ],
-        navSecondary: [
-          { title: 'Usuarios', url: '/usuarios', icon: 'UsersIcon' },
-          { title: 'Configuración', url: '/settings', icon: 'CogIcon' }
-        ],
-        upcoming: [],
-        documents: []
-      };
-      setMenus(staticMenus);
+        } else {
+          throw new Error('menus api failed');
+        }
+      } catch {
+        // Fallback a menús estáticos filtrados por permisos
+        const baseMenus: MenuStructure = {
+          navMain: [
+            { id: 'dashboard', title: 'Dashboard', url: '/dashboard', icon: 'HomeIcon', metabaseID: null, items: [] },
+          ],
+          navSecondary: [],
+          upcoming: [],
+          documents: []
+        };
+        const can = (userData.permissions || []).includes.bind(userData.permissions || []);
+        const isAdmin = (userData.role || '').toUpperCase() === 'ADMIN';
+        if (isAdmin || can('tickets.read')) baseMenus.navMain.push({ id: 'tickets', title: 'Tickets', url: '/tickets', icon: 'IconTicket', metabaseID: null, items: [] });
+        if (isAdmin || can('cartera.read')) baseMenus.navMain.push({ id: 'cartera', title: 'Cartera', url: '/cartera-contribuyentes', icon: 'IconWallet', metabaseID: null, items: [] });
+        if (isAdmin || can('pagos.read')) baseMenus.navMain.push({ id: 'pagos', title: 'Pagos ejecutados', url: '/pagos-ejecutados', icon: 'IconCreditCard', metabaseID: null, items: [] });
+        if (isAdmin || can('obligaciones.read')) baseMenus.navMain.push({ id: 'obligaciones', title: 'Obligaciones', url: '/obligaciones', icon: 'IconFile', metabaseID: null, items: [] });
+        if (isAdmin) baseMenus.navMain.push({ id: 'usuarios', title: 'Usuarios', url: '/usuarios', icon: 'IconUsers', metabaseID: null, items: [] });
+        setMenus(baseMenus);
+        menusToPersist = baseMenus;
+        if (typeof window !== 'undefined') {
+          localStorage.setItem("user_menus", JSON.stringify(baseMenus));
+        }
+      }
 
       if (typeof window !== 'undefined') {
         localStorage.setItem("user_data", JSON.stringify(userData));
-        localStorage.setItem("user_menus", JSON.stringify(staticMenus));
+        if (menusToPersist) {
+          localStorage.setItem("user_menus", JSON.stringify(menusToPersist));
+        }
       }
 
       console.log('🚀 Redirigiendo al dashboard...');

@@ -47,29 +47,35 @@ export function NavTransactional({
                 <SidebarMenuButton asChild>
                   <a 
                     href={item.url}
-                    className={`group relative transition-all duration-300 rounded-lg ${
+                    className={`group relative transition-all duration-300 rounded-xl border ${
                       isHighlighted 
-                        ? "bg-gradient-to-r from-purple-500 to-blue-600 text-white shadow-lg hover:from-purple-600 hover:to-blue-700 hover:shadow-xl transform hover:scale-105 border-2 border-purple-300" 
-                        : "hover:bg-blue-50 hover:text-blue-700"
-                    }`}
+                        ? "bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white border-slate-700 hover:border-cyan-400/60 hover:shadow-cyan-500/20 hover:shadow-xl"
+                        : "hover:bg-blue-50 hover:text-blue-700 border-transparent"
+                    } p-3 flex items-center gap-3 overflow-hidden`}
                   >
+                    {/* Icono */}
                     {IconComponent && (
-                      <IconComponent 
-                        size={22} 
-                        className={`transition-colors duration-300 ${
-                          isHighlighted 
-                            ? "text-white group-hover:text-purple-100" 
-                            : "text-gray-600 group-hover:text-blue-600"
-                        }`}
-                      />
+                      <span className="relative">
+                        <IconComponent 
+                          size={22} 
+                          className={`${isHighlighted ? "text-cyan-300" : "text-gray-600 group-hover:text-blue-600"}`}
+                        />
+                      </span>
                     )}
-                    <span className={`font-medium transition-all duration-300 ${
-                      isHighlighted ? "font-semibold" : ""
-                    }`}>
+
+                    {/* Texto */}
+                    <span className={`font-medium ${isHighlighted ? "tracking-wide" : ""}`}>
                       {item.title}
                     </span>
+
+                    {/* Badge NUEVA */}
                     {isHighlighted && (
-                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>
+                      <span className="ml-auto text-[10px] uppercase px-2 py-0.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md border border-white/10">Nueva</span>
+                    )}
+
+                    {/* Decoración tech */}
+                    {isHighlighted && (
+                      <span className="pointer-events-none absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_30%_20%,_#22d3ee_0,_transparent_40%),_radial-gradient(circle_at_70%_80%,_#3b82f6_0,_transparent_40%)]"/>
                     )}
                   </a>
                 </SidebarMenuButton>

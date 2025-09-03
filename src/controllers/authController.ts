@@ -230,10 +230,10 @@ export async function verifySession(
     
     try {
       const decoded = jwt.verify(token, secret);
-      
+
       // Buscar usuario en la base de datos para verificar que aún existe
       const [users] = await authSequelize.query(`
-        SELECT u.ID, u.USERNAME, u.EMAIL, u.FIRST_NAME, u.LAST_NAME, r.NAME as ROLE_NAME
+        SELECT u.ID, u.USERNAME, u.EMAIL, u.FIRST_NAME, u.LAST_NAME, u.ROLE_ID, r.NAME as ROLE_NAME
         FROM CGBRITO.USERS u
         JOIN CGBRITO.ROLES r ON u.ROLE_ID = r.ID
         WHERE u.ID = :userId AND u.STATUS = 'active'
@@ -247,6 +247,31 @@ export async function verifySession(
       }
 
       const user = users[0] as any; // Type assertion para evitar errores de TypeScript
+
+      // Obtener permisos del rol del usuario
+      let permissions: string[] = [];
+      try {
+        const permsResult = await authSequelize.query(`
+          SELECT p.NAME
+          FROM CGBRITO.PERMISSIONS p
+          JOIN CGBRITO.ROLE_PERMISSIONS rp ON p.ID = rp.PERMISSION_ID
+          WHERE rp.ROLE_ID = :roleId
+        `, {
+          replacements: { roleId: user.ROLE_ID },
+          type: 'SELECT'
+        });
+
+        const rows = Array.isArray(permsResult) ? permsResult : [permsResult];
+        permissions = rows
+          .map((r: any) => (Array.isArray(r) ? r : r))
+          .flat()
+          .filter((p: any) => p && (p.NAME || p.name))
+          .map((p: any) => p.NAME || p.name);
+      } catch (permError: any) {
+        console.log('⚠️ No se pudieron obtener permisos en verifySession:', permError?.message);
+        permissions = [];
+      }
+
       return { 
         valid: true, 
         user: {
@@ -255,7 +280,8 @@ export async function verifySession(
           email: user.EMAIL,
           firstName: user.FIRST_NAME,
           lastName: user.LAST_NAME,
-          role: user.ROLE_NAME
+          role: user.ROLE_NAME,
+          permissions
         }
       };
     } catch (jwtError) {
@@ -279,12 +305,24 @@ async function logAuditEvent(
   try {
     // Verificar si la tabla AUDIT_LOGS existe antes de intentar insertar
     const tableExists = await authSequelize.query(`
-      SELECT COUNT(*) as table_count
+      SELECT COUNT(*) AS TABLE_COUNT
       FROM user_tables 
       WHERE table_name = 'AUDIT_LOGS'
     `, { type: 'SELECT' });
-    
-    if (!tableExists || !tableExists[0] || tableExists[0][0] === 0) {
+
+    let count = 0;
+    try {
+      const row: any = Array.isArray(tableExists) && tableExists.length > 0 ? (tableExists as any)[0] : null;
+      if (Array.isArray(row)) {
+        count = Number(row[0] ?? 0);
+      } else if (row) {
+        count = Number(row.TABLE_COUNT ?? row.table_count ?? Object.values(row)[0] ?? 0);
+      }
+    } catch {
+      count = 0;
+    }
+
+    if (!count || Number(count) === 0) {
       // La tabla no existe, solo log en consola
       console.log(`📝 [AUDIT] ${action} en ${resource} por usuario ${userId} - IP: ${ipAddress}`);
       return;

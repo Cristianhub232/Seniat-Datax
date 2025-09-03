@@ -21,33 +21,23 @@ export function usePermissions() {
       return false;
     }
     
+    // Normalizar rol (case-insensitive)
+    const normalizedRole = (user.role || '').toString().toUpperCase();
+
     // ADMIN tiene todos los permisos
-    if (user.role === 'ADMIN') {
+    if (normalizedRole === 'ADMIN') {
       console.log('   ✅ Usuario es ADMIN, permitiendo acceso');
       return true;
     }
     
-    // Verificar si el usuario tiene el permiso específico
-    // Los permisos vienen del contexto de autenticación, no del UserData
-    // Por ahora, implementar lógica básica basada en el rol
-    if (user.role === 'Ejecutivo') {
-      // Ejecutivo solo tiene permisos limitados
-      const allowedPermissions = [
-        'dashboard.access',
-        'dashboard.metrics',
-        'ejecutivos.read',
-        'ejecutivos.update',
-        'tickets.manage',
-        'cartera.manage',
-        'pagos.manage',
-        'reports.access'
-      ];
-      
-      const permissionString = `${requiredPermission.resource}.${requiredPermission.action}`;
-      return allowedPermissions.includes(permissionString);
+    // Verificar si el usuario tiene el permiso específico provisto por el backend
+    const permissionString = `${requiredPermission.resource}.${requiredPermission.action}`;
+    const userPermissions: string[] = Array.isArray(user.permissions) ? user.permissions : [];
+    const has = userPermissions.includes(permissionString);
+    if (!has) {
+      console.log('   ❌ Permiso faltante:', permissionString);
     }
-    
-    return false;
+    return has;
   }, [isAuthenticated, user, isLoading]);
 
   const hasAnyPermission = useCallback((requiredPermissions: Permission[]): boolean => {

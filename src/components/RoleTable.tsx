@@ -159,6 +159,7 @@ export function RoleTable({ roles, onEditPermissions, onRoleUpdated, onEditRole,
         description={`¿Estás seguro de que quieres eliminar el rol "${deleteRole?.name}"? Esta acción no se puede deshacer.`}
         onConfirm={handleDeleteRole}
         confirmLabel="Eliminar"
+        type="danger"
       />
     </>
   );

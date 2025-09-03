@@ -14,6 +14,16 @@ function generateUUID() {
   });
 }
 
+function hasPermissionForUsers(role: string, action: 'read' | 'manage' | 'create', permissions?: string[]) {
+  const normalizedRole = (role || '').toUpperCase();
+  if (normalizedRole === 'ADMIN') return true;
+  const perms = Array.isArray(permissions) ? permissions : [];
+  if (action === 'read') return perms.includes('users.read');
+  if (action === 'create') return perms.includes('users.create') || perms.includes('users.manage');
+  if (action === 'manage') return perms.includes('users.manage');
+  return false;
+}
+
 // GET /api/auth/users → listar usuarios
 export async function GET(req: NextRequest) {
   const token = req.cookies.get('auth_token')?.value;
@@ -21,11 +31,40 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Token no proporcionado' }, { status: 401 });
   }
   
-  const tokenPayload = verifyToken(token);
+  const tokenPayload = verifyToken(token) as any;
   if (!tokenPayload) {
     return NextResponse.json({ error: 'Token inválido' }, { status: 403 });
   }
-  
+
+  // Cargar permisos del rol
+  let permissions: string[] = [];
+  try {
+    const [users] = await authSequelize.query(`
+      SELECT u.ROLE_ID, r.NAME as ROLE_NAME
+      FROM CGBRITO.USERS u
+      JOIN CGBRITO.ROLES r ON u.ROLE_ID = r.ID
+      WHERE u.ID = :userId AND u.STATUS = 'active'
+    `, { replacements: { userId: tokenPayload.id }, type: 'SELECT' });
+
+    const userRow: any = Array.isArray(users) ? (users.length > 0 ? users[0] : null) : users;
+    if (userRow && userRow.ROLE_ID != null) {
+      const result = await authSequelize.query(`
+        SELECT p.NAME FROM CGBRITO.PERMISSIONS p
+        JOIN CGBRITO.ROLE_PERMISSIONS rp ON p.ID = rp.PERMISSION_ID
+        WHERE rp.ROLE_ID = :roleId
+      `, { replacements: { roleId: userRow.ROLE_ID }, type: 'SELECT' });
+      const rows = Array.isArray(result) ? result : [result];
+      permissions = rows.map((r: any) => (r.NAME || r.name)).filter(Boolean);
+    }
+
+    if (!hasPermissionForUsers(userRow?.ROLE_NAME || '', 'read', permissions)) {
+      return NextResponse.json({ error: 'Sin permiso para listar usuarios' }, { status: 403 });
+    }
+  } catch (e) {
+    // Si no podemos verificar permisos, denegamos por seguridad
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     const username = searchParams.get('username');
@@ -64,10 +103,10 @@ export async function GET(req: NextRequest) {
     });
 
     // Extraer el array de usuarios del resultado
-    const users = Array.isArray(result) ? result : [result];
+    const usersList = Array.isArray(result) ? result : [result];
 
     // Transformar los resultados para que coincidan con el formato esperado
-    const transformedUsers = users.map((user: any) => ({
+    const transformedUsers = usersList.map((user: any) => ({
       id: user.ID || user.id,
       username: user.USERNAME || user.username,
       email: user.EMAIL || user.email,
@@ -93,7 +132,38 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const token = req.cookies.get('auth_token')?.value;
   if (!token) return NextResponse.json({ error: 'Token no proporcionado' }, { status: 401 });
-  if (!verifyToken(token)) return NextResponse.json({ error: 'Token inválido' }, { status: 403 });
+  const tokenPayload = verifyToken(token) as any;
+  if (!tokenPayload) return NextResponse.json({ error: 'Token inválido' }, { status: 403 });
+
+  // Cargar permisos del rol
+  let permissions: string[] = [];
+  let roleName = '';
+  try {
+    const [users] = await authSequelize.query(`
+      SELECT u.ROLE_ID, r.NAME as ROLE_NAME
+      FROM CGBRITO.USERS u
+      JOIN CGBRITO.ROLES r ON u.ROLE_ID = r.ID
+      WHERE u.ID = :userId AND u.STATUS = 'active'
+    `, { replacements: { userId: tokenPayload.id }, type: 'SELECT' });
+
+    const userRow: any = Array.isArray(users) ? (users.length > 0 ? users[0] : null) : users;
+    roleName = userRow?.ROLE_NAME || '';
+    if (userRow && userRow.ROLE_ID != null) {
+      const result = await authSequelize.query(`
+        SELECT p.NAME FROM CGBRITO.PERMISSIONS p
+        JOIN CGBRITO.ROLE_PERMISSIONS rp ON p.ID = rp.PERMISSION_ID
+        WHERE rp.ROLE_ID = :roleId
+      `, { replacements: { roleId: userRow.ROLE_ID }, type: 'SELECT' });
+      const rows = Array.isArray(result) ? result : [result];
+      permissions = rows.map((r: any) => (r.NAME || r.name)).filter(Boolean);
+    }
+
+    if (!hasPermissionForUsers(roleName, 'create', permissions)) {
+      return NextResponse.json({ error: 'Sin permiso para crear usuarios' }, { status: 403 });
+    }
+  } catch (e) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+  }
 
   try {
     const body = createUserSchema.parse(await req.json());

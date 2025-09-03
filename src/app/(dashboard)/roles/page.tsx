@@ -8,6 +8,7 @@ import { Plus, Shield, Users, Eye, EyeOff, Settings, Lock, Unlock } from "lucide
 import { AddRoleModal } from "@/components/AddRoleModal";
 import { EditRoleModal } from "@/components/EditRoleModal";
 import { RoleTable } from "@/components/RoleTable";
+import { PermissionsModal } from "@/components/PermissionsModal";
 import { usePermissions } from "@/hooks/usePermissions";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
@@ -158,59 +159,59 @@ function RolesPageContent() {
 
       {/* Estadísticas de roles */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <Card>
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Roles</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-blue-800">Total de Roles</CardTitle>
+            <Shield className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{roles.length}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-2xl font-bold text-blue-900">{roles.length}</div>
+            <p className="text-xs text-blue-700">
               Roles configurados en el sistema
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Roles Activos</CardTitle>
-            <Unlock className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-green-800">Roles Activos</CardTitle>
+            <Unlock className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-green-900">
               {roles.filter(role => role.status === 'active').length}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-green-700">
               Roles en uso actualmente
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Usuarios Asignados</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-purple-800">Usuarios Asignados</CardTitle>
+            <Users className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-purple-900">
               {roles.reduce((total, role) => total + (role.userCount || 0), 0)}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-purple-700">
               Total de usuarios con roles
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Permisos Totales</CardTitle>
-            <Settings className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-orange-800">Permisos Totales</CardTitle>
+            <Settings className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-orange-900">
               {roles.reduce((total, role) => total + (role.permissions?.length || 0), 0)}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-orange-700">
               Permisos asignados en total
             </p>
           </CardContent>
@@ -263,9 +264,15 @@ function RolesPageContent() {
 
       {/* Modal de permisos - solo para roles que se pueden editar */}
       {selectedRole && (canUpdate || isAdmin) && (
-        <div>
-          {/* Aquí iría el modal de permisos */}
-        </div>
+        <PermissionsModal
+          open={showPermissionsModal}
+          onClose={() => {
+            setShowPermissionsModal(false);
+            setSelectedRole(null);
+          }}
+          role={selectedRole}
+          onPermissionsUpdated={handleRoleUpdated}
+        />
       )}
     </div>
   );
