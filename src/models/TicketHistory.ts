@@ -7,7 +7,7 @@ export interface TicketHistoryAttributes {
   campo_cambiado: string;
   valor_anterior?: string;
   valor_nuevo?: string;
-  usuario_id: number;
+  usuario_id: string;
   fecha_cambio?: Date;
 }
 
@@ -19,7 +19,7 @@ class TicketHistory extends Model<TicketHistoryAttributes, TicketHistoryCreation
   public campo_cambiado!: string;
   public valor_anterior?: string;
   public valor_nuevo?: string;
-  public usuario_id!: number;
+  public usuario_id!: string;
   public fecha_cambio!: Date;
 
   // Timestamps
@@ -60,7 +60,7 @@ TicketHistory.init(
       field: 'VALOR_NUEVO'
     },
     usuario_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING(36),
       allowNull: false,
       field: 'USUARIO_ID'
     },

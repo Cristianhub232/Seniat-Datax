@@ -41,7 +41,7 @@ export function NavUpcoming({
                   <SidebarMenuButton asChild className="group relative overflow-hidden">
                     <a 
                       href={item.url}
-                      className="metabase-button tech-glow tech-particles ripple-effect relative block w-full h-16 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-lg p-3 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/40 slide-in"
+                      className="relative block w-full h-14 rounded-xl p-3 transition-all duration-500 hover:scale-[1.01] hover:shadow-lg bg-gradient-to-br from-slate-200 via-slate-100 to-white text-slate-800 border border-slate-200 hover:border-cyan-300/60"
                     >
 
                       
@@ -80,22 +80,20 @@ export function NavUpcoming({
                         
                         {/* Texto */}
                         <div className="flex-1 min-w-0">
-                          <div className="text-white font-bold text-sm group-hover:text-cyan-100 transition-colors duration-300 drop-shadow-sm">
+                          <div className="text-slate-800 font-semibold text-sm group-hover:text-slate-900 transition-colors duration-300">
                             {item.title}
                           </div>
-                          <div className="text-cyan-200 text-xs opacity-90 group-hover:opacity-100 transition-opacity duration-300 font-medium">
-                            Análisis Avanzado
+                          <div className="text-slate-600 text-[10px] opacity-90 group-hover:opacity-100 transition-opacity duration-300 font-medium">
+                            Próximamente
                           </div>
                         </div>
                         
-                        {/* Indicador de estado */}
-                        <div className="flex-shrink-0">
-                          <div className="w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full pulse-tech group-hover:animate-bounce shadow-lg"></div>
-                        </div>
+                        {/* Cintillo similar a transaccionales */}
+                        <span className="ml-auto text-[9px] uppercase px-1.5 py-0.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-sm border border-white/20 animate-pulse">Próximo</span>
                       </div>
                       
-                      {/* Borde brillante */}
-                      <div className="absolute inset-0 rounded-lg border-2 border-white/30 group-hover:border-white/60 transition-all duration-500"></div>
+                      {/* Borde sutil */}
+                      <div className="absolute inset-0 rounded-xl ring-1 ring-black/5"></div>
                       
                       {/* Efecto de esquinas tech */}
                       <div className="absolute top-0 left-0 w-2 h-2 border-l-2 border-t-2 border-cyan-400 rounded-tl-lg"></div>

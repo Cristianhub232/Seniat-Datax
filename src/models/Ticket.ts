@@ -10,8 +10,8 @@ export interface TicketAttributes {
   fecha_creacion?: Date;
   fecha_limite?: Date;
   fecha_completado?: Date;
-  ejecutivo_id?: number;
-  creado_por: number;
+  ejecutivo_id?: string | null;
+  creado_por: string;
   observaciones?: string;
   created_at?: Date;
   updated_at?: Date;
@@ -28,8 +28,8 @@ class Ticket extends Model<TicketAttributes, TicketCreationAttributes> implement
   public fecha_creacion!: Date;
   public fecha_limite?: Date;
   public fecha_completado?: Date;
-  public ejecutivo_id?: number;
-  public creado_por!: number;
+  public ejecutivo_id?: string | null;
+  public creado_por!: string;
   public observaciones?: string;
   public created_at!: Date;
   public updated_at!: Date;
@@ -86,12 +86,12 @@ Ticket.init(
       field: 'FECHA_COMPLETADO'
     },
     ejecutivo_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING(36),
       allowNull: true,
       field: 'EJECUTIVO_ID'
     },
     creado_por: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING(36),
       allowNull: false,
       field: 'CREADO_POR'
     },

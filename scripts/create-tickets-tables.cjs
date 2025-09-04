@@ -27,8 +27,8 @@ async function createTicketsTables() {
         fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         fecha_limite TIMESTAMP,
         fecha_completado TIMESTAMP,
-        ejecutivo_id NUMBER,
-        creado_por NUMBER NOT NULL,
+        ejecutivo_id VARCHAR2(36),
+        creado_por VARCHAR2(36) NOT NULL,
         observaciones CLOB,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -88,8 +88,8 @@ async function createTicketsTables() {
         estado: 'En Proceso',
         prioridad: 'Alta',
         fecha_limite: '2025-01-15 17:00:00',
-        ejecutivo_id: 1,
-        creado_por: 1,
+        ejecutivo_id: null,
+        creado_por: 'admin',
         observaciones: 'Prioridad alta para el equipo de análisis'
       },
       {
@@ -98,8 +98,8 @@ async function createTicketsTables() {
         estado: 'Pendiente',
         prioridad: 'Media',
         fecha_limite: '2025-01-20 17:00:00',
-        ejecutivo_id: 2,
-        creado_por: 1,
+        ejecutivo_id: null,
+        creado_por: 'admin',
         observaciones: 'Revisar rendimiento de consultas'
       },
       {
@@ -108,8 +108,8 @@ async function createTicketsTables() {
         estado: 'Completado',
         prioridad: 'Alta',
         fecha_limite: '2025-01-10 17:00:00',
-        ejecutivo_id: 1,
-        creado_por: 1,
+        ejecutivo_id: null,
+        creado_por: 'admin',
         observaciones: 'Migración completada exitosamente'
       },
       {
@@ -118,8 +118,8 @@ async function createTicketsTables() {
         estado: 'Pendiente',
         prioridad: 'Crítica',
         fecha_limite: '2025-01-25 17:00:00',
-        ejecutivo_id: 3,
-        creado_por: 1,
+        ejecutivo_id: null,
+        creado_por: 'admin',
         observaciones: 'Reporte requerido por dirección'
       },
       {
@@ -128,8 +128,8 @@ async function createTicketsTables() {
         estado: 'En Proceso',
         prioridad: 'Alta',
         fecha_limite: '2025-01-18 17:00:00',
-        ejecutivo_id: 2,
-        creado_por: 1,
+        ejecutivo_id: null,
+        creado_por: 'admin',
         observaciones: 'Configurar cron job para backups'
       }
     ];

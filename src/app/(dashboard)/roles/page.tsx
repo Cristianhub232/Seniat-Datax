@@ -66,25 +66,13 @@ function RolesPageContent() {
     }
   };
 
-  // Cargar menús disponibles
-  const loadMenus = async () => {
-    try {
-      const response = await fetch('/api/admin/menus', {
-        credentials: 'include'
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setMenus(data);
-      }
-    } catch (error) {
-      console.error('Error cargando menús:', error);
-    }
-  };
+  // Menús: evitar fetch redundante aquí; se obtienen vía barra lateral/contexto
+  const loadMenus = async () => { setMenus([] as any); };
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      await Promise.all([loadRoles(), loadMenus()]);
+      await Promise.all([loadRoles()]);
       setLoading(false);
     };
     fetchData();

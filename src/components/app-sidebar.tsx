@@ -20,6 +20,7 @@ import {
 
 import { useUserProfile } from "@/hooks/useUserProfile";
 import type { MenuNodeRoot } from "@/types/user";
+import Image from "next/image";
 
 
 export function AppSidebar({...props }) {
@@ -41,9 +42,15 @@ export function AppSidebar({...props }) {
                 asChild
                 className="data-[slot=sidebar-menu-button]:!p-1.5"
               >
-                <a href="#">
-                  <IconInnerShadowTop className="!size-3 bg-red-500/90 rounded-full" />
-                  <span className="text-base font-semibold">Data Fiscal</span>
+                <a href="#" className="flex items-center justify-center gap-2 w-full h-24">
+                  <Image
+                    src="/Logo_basado_en_banner.png"
+                    alt="Logo"
+                    width={720}
+                    height={120}
+                    className="h-20 w-auto object-contain"
+                    priority
+                  />
                 </a>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -70,9 +77,15 @@ export function AppSidebar({...props }) {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="#">
-                <IconInnerShadowTop className="!size-3 bg-red-500/90 rounded-full" />
-                <span className="text-base font-semibold">Data Fiscal</span>
+              <a href="#" className="flex items-center justify-center gap-2 w-full h-24">
+                <Image
+                  src="/Logo_basado_en_banner.png"
+                  alt="Logo"
+                  width={720}
+                  height={120}
+                  className="h-20 w-auto object-contain"
+                  priority
+                />
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -86,7 +99,8 @@ export function AppSidebar({...props }) {
               .filter((item: MenuNodeRoot) => 
                 item.url !== "/cartera-contribuyentes" && 
                 item.url !== "/pagos-ejecutados" &&
-                item.url !== "/obligaciones"
+                item.url !== "/obligaciones" &&
+                item.url !== "/metabase"
               )
               .map((item: MenuNodeRoot) => ({
                 ...item,

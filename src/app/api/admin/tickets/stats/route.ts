@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/jwtUtils';
-import sequelize from '@/lib/db';
+import sequelize, { authSequelize } from '@/lib/db';
+import { QueryTypes } from 'sequelize';
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,9 +16,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Token inválido' }, { status: 403 });
     }
 
-    // Verificar rol de administrador
-    if (tokenPayload.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Acceso denegado. Solo administradores.' }, { status: 403 });
+    // Cargar rol/permiso
+    const roleRows: any = await authSequelize.query(
+      `SELECT u.ROLE_ID, r.NAME as ROLE_NAME
+       FROM CGBRITO.USERS u
+       JOIN CGBRITO.ROLES r ON u.ROLE_ID = r.ID
+       WHERE u.ID = :userId AND u.STATUS = 'active'`,
+      { replacements: { userId: tokenPayload.id }, type: QueryTypes.SELECT }
+    );
+    const roleRow = Array.isArray(roleRows) ? (roleRows.length > 0 ? roleRows[0] : null) : roleRows;
+    const roleName = ((roleRow?.ROLE_NAME || '') as string).toUpperCase();
+    if (!(roleName === 'ADMIN')) {
+      return NextResponse.json({ error: 'Sin permiso para ver estadísticas' }, { status: 403 });
     }
 
     // Consulta para estadísticas generales
@@ -37,6 +47,13 @@ export async function GET(request: NextRequest) {
     `;
 
     // Consulta para tickets por ejecutivo
+    // Resolver dinámicamente ROLE_ID de EJECUTIVO
+    const roleEjRows: any = await authSequelize.query(
+      `SELECT ID FROM CGBRITO.ROLES WHERE UPPER(NAME) = 'EJECUTIVO'`,
+      { type: QueryTypes.SELECT }
+    );
+    const ejecutivoRoleId = Array.isArray(roleEjRows) && roleEjRows.length ? roleEjRows[0].ID : null;
+
     const ejecutivosQuery = `
       SELECT 
         u.ID,
@@ -48,7 +65,7 @@ export async function GET(request: NextRequest) {
         SUM(CASE WHEN t.estado = 'Completado' THEN 1 ELSE 0 END) as completados
       FROM USERS u
       LEFT JOIN TICKETS t ON u.ID = t.EJECUTIVO_ID
-      WHERE u.role_id = 2
+      ${ejecutivoRoleId ? 'WHERE u.ROLE_ID = ' + ejecutivoRoleId : ''}
       GROUP BY u.ID, u.USERNAME, u.FIRST_NAME, u.LAST_NAME
       ORDER BY total_tickets DESC
     `;

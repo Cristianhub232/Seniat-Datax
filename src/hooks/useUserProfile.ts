@@ -99,6 +99,19 @@ const staticMenus: MenuStructure = {
   ]
 };
 
+// Documento por defecto solicitado para la sección Documents
+const DEFAULT_DOCUMENT: { name: string; url: string; icon: string } = {
+  name: "Calendario SPE 2025 (extracto)",
+  url: "http://172.16.56.23:3001/GO-43031-18122024-Calendario-SPE-2025-extracto.pdf",
+  icon: "IconFileText",
+};
+
+function ensureDefaultDocument(documents: { name: string; url: string; icon: string }[] = []) {
+  const hasDefault = documents.some((d) => d.url === DEFAULT_DOCUMENT.url);
+  if (hasDefault) return documents;
+  return [...documents, DEFAULT_DOCUMENT];
+}
+
 export function useUserProfile(): {
   user: UserData | null;
   menus: MenuStructure | null;
@@ -125,8 +138,33 @@ export function useUserProfile(): {
 
         if (storedMenus) {
           try {
-            setMenus(JSON.parse(storedMenus));
+            const parsed = JSON.parse(storedMenus);
+            // Asegurar que el documento por defecto esté presente aunque exista caché
+            const merged = {
+              ...parsed,
+              documents: ensureDefaultDocument(parsed.documents || []),
+              upcoming: parsed.upcoming || staticMenus.upcoming,
+            } as MenuStructure;
+            setMenus(merged);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('user_menus', JSON.stringify(merged));
+            }
             setIsLoading(false);
+            // Intento en segundo plano para refrescar desde backend (sin flicker)
+            try {
+              const resBg = await fetch('/api/admin/menus', { credentials: 'include' });
+              if (resBg.ok) {
+                const dataBg = await resBg.json();
+                const refreshed: MenuStructure = {
+                  navMain: dataBg.navMain || [],
+                  navSecondary: dataBg.navSecondary || [],
+                  upcoming: dataBg.upcoming || staticMenus.upcoming,
+                  documents: ensureDefaultDocument(dataBg.documents || []),
+                };
+                setMenus(refreshed);
+                localStorage.setItem('user_menus', JSON.stringify(refreshed));
+              }
+            } catch {}
             return;
           } catch {
             localStorage.removeItem('user_menus');
@@ -141,8 +179,8 @@ export function useUserProfile(): {
             const menuData: MenuStructure = {
               navMain: data.navMain || [],
               navSecondary: data.navSecondary || [],
-              upcoming: [],
-              documents: data.documents || []
+              upcoming: data.upcoming || staticMenus.upcoming,
+              documents: ensureDefaultDocument(data.documents || [])
             };
             setMenus(menuData);
             if (typeof window !== 'undefined') {
@@ -159,7 +197,7 @@ export function useUserProfile(): {
           const role = (u?.role || '').toUpperCase();
           const perms = Array.isArray(u?.permissions) ? u?.permissions : [];
           const can = (p: string) => perms.includes(p);
-          const base: MenuStructure = { navMain: [], navSecondary: [], upcoming: [], documents: staticMenus.documents };
+          const base: MenuStructure = { navMain: [], navSecondary: [], upcoming: staticMenus.upcoming, documents: staticMenus.documents };
           base.navMain.push({ id: 'dashboard', title: 'Dashboard', url: '/dashboard', icon: 'IconHome', items: [], metabaseID: null });
           if (role === 'ADMIN' || can('tickets.read')) base.navMain.push({ id: 'tickets', title: 'Tickets', url: '/tickets', icon: 'IconTicket', items: [], metabaseID: null });
           if (role === 'ADMIN' || can('cartera.read')) base.navMain.push({ id: 'cartera', title: 'Cartera', url: '/cartera-contribuyentes', icon: 'IconBuilding', items: [], metabaseID: null });
@@ -182,7 +220,9 @@ export function useUserProfile(): {
       }
     };
     init();
-  }, [user]);
+    // Importante: no depender de `user` para evitar bucles de recarga de menús
+    // El usuario se sincroniza por localStorage y AuthContext
+  }, []);
 
   return { user, menus, isLoading };
 }

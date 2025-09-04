@@ -6,7 +6,7 @@ import { QueryTypes } from 'sequelize';
 type MenuNodeChild = { id: string; title: string; url: string; icon: string | null; metabaseID: number | null };
 type MenuNodeRoot = MenuNodeChild & { items: MenuNodeChild[] };
 type SecondaryItem = { title: string; url: string; icon: string };
-type MenuStructure = { navMain: MenuNodeRoot[]; navSecondary: SecondaryItem[]; documents: any[] };
+type MenuStructure = { navMain: MenuNodeRoot[]; navSecondary: SecondaryItem[]; documents: any[]; upcoming: { title: string; url: string; icon?: string }[] };
 
 export async function GET(req: NextRequest) {
   const token = req.cookies.get('auth_token')?.value;
@@ -55,6 +55,7 @@ export async function GET(req: NextRequest) {
 
     const navMain: MenuNodeRoot[] = [];
     let navSecondary: SecondaryItem[] = [];
+    const upcoming: { title: string; url: string; icon?: string }[] = [];
 
     const rows = Array.isArray(dbMenus) ? dbMenus : [dbMenus];
     if (rows.length > 0) {
@@ -94,6 +95,10 @@ export async function GET(req: NextRequest) {
       if (roleName === 'ADMIN' || permissions.includes('ayuda.read')) {
         navSecondary.push({ title: 'Ayuda', url: '/ayuda', icon: 'IconHelp' });
       }
+      // Próximamente: Metabase
+      if (roleName === 'ADMIN' || permissions.includes('metabase.access')) {
+        upcoming.push({ title: 'Metabase', url: '/metabase', icon: 'IconChart' });
+      }
     } else {
       // Fallback: construir menús a partir de permisos
       const can = (perm: string) => permissions.includes(perm);
@@ -114,7 +119,10 @@ export async function GET(req: NextRequest) {
       if (isAdmin || can('cartera.read')) addMain('cartera', 'Cartera', '/cartera-contribuyentes', 'IconWallet');
       if (isAdmin || can('pagos.read')) addMain('pagos', 'Pagos ejecutados', '/pagos-ejecutados', 'IconCreditCard');
       if (isAdmin || can('obligaciones.read')) addMain('obligaciones', 'Obligaciones', '/obligaciones', 'IconFile');
-      if (isAdmin || can('metabase.access')) addMain('metabase', 'Metabase', '/metabase', 'IconChart');
+      // Mover Metabase a sección Próximamente
+      if (isAdmin || can('metabase.access')) {
+        upcoming.push({ title: 'Metabase', url: '/metabase', icon: 'IconChart' });
+      }
       // Secundarios
       navSecondary = [];
       if (isAdmin || can('configuracion.read')) {
@@ -140,7 +148,16 @@ export async function GET(req: NextRequest) {
       return false;
     });
 
-    const payload: MenuStructure = { navMain: dedupedNavMain, navSecondary, documents: [] };
+    // Sección Documents: añadir acceso directo solicitado
+    const documents = [
+      {
+        name: 'Calendario SPE 2025 (extracto)',
+        url: 'http://172.16.56.23:3001/GO-43031-18122024-Calendario-SPE-2025-extracto.pdf',
+        icon: 'IconFileText'
+      }
+    ];
+
+    const payload: MenuStructure = { navMain: dedupedNavMain, navSecondary, documents, upcoming };
     return NextResponse.json(payload, { status: 200 });
   } catch (error) {
     console.error('[GET /api/admin/menus] Error:', error);
